@@ -65,6 +65,7 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Esta aplicación requiere acceso a la red local para transmitir la pantalla del iPhone a tu computadora.</string>
 	<key>NSBonjourServices</key>

@@ -24,7 +24,7 @@ jobs:
         run: flutter pub get
 
       - name: Compilar aplicación iOS (Release sin firma)
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign -v
 
       - name: Empaquetar en archivo .ipa instalable
         run: |

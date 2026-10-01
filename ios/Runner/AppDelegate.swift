@@ -14,11 +14,10 @@ import ReplayKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
-    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ScreenMirrorBroadcastPicker")
-    registrar.register(
-      BroadcastPickerFactory(messenger: registrar.messenger()),
-      withId: "com.screenmirror.broadcast_picker"
-    )
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ScreenMirrorBroadcastPicker") {
+      let factory = BroadcastPickerFactory(messenger: registrar.messenger())
+      registrar.register(factory, withId: "com.screenmirror.broadcast_picker")
+    }
   }
 }
 
@@ -38,7 +37,7 @@ class BroadcastPickerFactory: NSObject, FlutterPlatformViewFactory {
     return BroadcastPickerView(frame: frame, viewId: viewId, args: args, messenger: messenger)
   }
 
-  func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+  public func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
     return FlutterStandardMessageCodec.sharedInstance()
   }
 }
