@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruleta de Premios y Descuentos</title>
+  <style>
+    :root {
+      --primary: #ff5722;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #ffffff;
+      --accent: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at center, #1e293b 0%, var(--bg) 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 30px 20px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto 24px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+      transition: transform 4s cubic-bezier(0.12, 0.9, 0.25, 1);
+    }
+
+    .pointer {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid #ef4444;
+      z-index: 10;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+
+    .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .btn-spin {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border: none;
+      padding: 14px 36px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      transition: all 0.2s ease;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .btn-spin:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
+    }
+
+    .btn-spin:disabled {
+      background: #475569;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      min-height: 40px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎡 Ruleta de Descuentos</h1>
+    <p>¡Gira la ruleta y descubre tu premio especial!</p>
+
+    <div class="wheel-container">
+      <div class="pointer"></div>
+      <canvas id="wheelCanvas" width="600" height="600"></canvas>
+      <div class="center-circle">🎁</div>
+    </div>
+
+    <button class="btn-spin" id="spinBtn">¡GIRAR AHORA!</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultDiv = document.getElementById('result');
+
+    const prizes = [
+      { text: "10% OFF", color: "#3b82f6" },
+      { text: "Envío Gratis", color: "#10b981" },
+      { text: "25% OFF", color: "#8b5cf6" },
+      { text: "Regalo Extra", color: "#ec4899" },
+      { text: "15% OFF", color: "#06b6d4" },
+      { text: "50% OFF", color: "#f59e0b" }
+    ];
+
+    const numSegments = prizes.length;
+    const arcSize = (2 * Math.PI) / numSegments;
+    let currentAngle = 0;
+    let isSpinning = false;
+
+    function drawWheel() {
+      const radius = canvas.width / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      prizes.forEach((prize, i) => {
+        const angle = i * arcSize;
+        ctx.beginPath();
+        ctx.fillStyle = prize.color;
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, angle, angle + arcSize);
+        ctx.lineTo(radius, radius);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 30px sans-serif";
+        ctx.fillText(prize.text, radius - 40, 10);
+        ctx.restore();
+      });
+    }
+
+    drawWheel();
+
+    spinBtn.addEventListener('click', () => {
+      if (isSpinning) return;
+      isSpinning = true;
+      spinBtn.disabled = true;
+      resultDiv.innerText = "Girando...";
+
+      const extraSpins = 5 + Math.floor(Math.random() * 4);
+      const randomSegment = Math.floor(Math.random() * numSegments);
+
+      // Calcular ángulo para que el puntero superior coincida con el segmento
+      const segmentAngle = 360 / numSegments;
+      const targetRotation = (extraSpins * 360) + (360 - (randomSegment * segmentAngle) - (segmentAngle / 2)) - 90;
+
+      currentAngle += targetRotation;
+      canvas.style.transform = `rotate(${currentAngle}deg)`;
+
+      setTimeout(() => {
+        isSpinning = false;
+        spinBtn.disabled = true;
+        spinBtn.innerText = "¡Premio Reclamado!";
+        resultDiv.innerHTML = `🎉 ¡Ganaste: <strong>${prizes[randomSegment].text}</strong>!`;
+      }, 4200);
+    });
+  </script>
+</body>
+</html>
