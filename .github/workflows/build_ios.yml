@@ -1,0 +1,41 @@
+name: Compilar IPA para iPhone
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Permite ejecutar la compilación manualmente con un clic en GitHub
+
+jobs:
+  build:
+    name: Compilar en macOS Cloud
+    runs-on: macos-14 # Máquinas Mac oficiales M1/M2 de GitHub
+    
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Compilar aplicación iOS (Release sin firma)
+        run: flutter build ios --release --no-codesign
+
+      - name: Empaquetar en archivo .ipa instalable
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r -q ios_screen_mirror.ipa Payload
+          echo "Archivo IPA generado exitosamente."
+
+      - name: Subir archivo IPA como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screen-mirror-app
+          path: ios_screen_mirror.ipa
+          retention-days: 7
